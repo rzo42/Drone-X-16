@@ -1,0 +1,477 @@
+!--------------------------------------------------
+!-Drone X-15
+!-By Ryan Liston
+!- Sunday, January 27, 2020 01:03:46 am
+!- c:\users\ryan\desktop\cx16\x16emu_win-r36\dx16b1.prg
+!- Commander X16
+!--------------------------------------------------
+1 COLOR0,0:PRINTCHR$(147):GOTO56
+2 REM "shield meter"
+3 IFSH>23THENSH=23
+4 IFSH<0THENSH=0
+5 IFSH=SMTHENRETURN
+6 IF SH>SMTHEN10
+7 VPOKE$0,(31+((23-SM)*64))*2+S2,MR(0):IFSH=SMTHENRETURN
+8 FORT=0TO4:VPOKE $F, 3, $34:VPOKE $F, 3, 181:NEXTT
+9 SM=SM-1:GOTO7
+10 VPOKE$0,(31+((23-SM)*64))*2+S2,MR(7):IFSH=SMTHENRETURN
+11 SM=SM+1:GOTO10
+12 REM "data meter"
+13 IFDM>206THENDM=206
+14 IFDM<0THENDM=0
+15 D4%=DM:IFDM=D9THENRETURN
+16 IFDM<D9THEN21
+17 D5=DM/8:D6%=D5:D7%=8*(D5-D6%)
+18 M5=D9/8:M6%=M5:M7%=8*(M5-M6%)
+19 VPOKE$0,(35+((23-M6%)*64))*2+S2,MR(M7%):IFD4%=D9THENRETURN
+20 D9=D9+1:GOTO17
+21 D5=DM/8:D6%=D5:D7%=8*(D5-D6%)
+22 M5=D9/8:M6%=M5:M7%=8*(M5-M6%)
+23 VPOKE$0,(35+((23-M6%)*64))*2+S2,MR(M7%):IFD4%=D9THENRETURN
+24 D9=D9-1:GOTO21
+25 REM "fuel meter"
+26 IFFL>206THENFL=206
+27 IFFL<0THENFL=0
+28 F4%=FL:IFFL=F9THENRETURN
+29 IFFL<F9THEN34
+30 F5=FL/8:F6%=F5:F7%=8*(F5-F6%)
+31 L5=F9/8:L6%=L5:L7%=8*(L5-L6%)
+32 VPOKE$0,(33+((23-L6%)*64))*2+S2,MR(L7%):IFF4%=F9THENRETURN
+33 F9=F9+1:GOTO30
+34 F5=FL/8:F6%=F5:F7%=8*(F5-F6%)
+35 L5=F9/8:L6%=L5:L7%=8*(L5-L6%)
+36 VPOKE$0,(33+((23-L6%)*64))*2+S2,MR(L7%):IFF4%=F9THENRETURN
+37 F9=F9-1:GOTO34
+38 REM"gets controller input"
+39 REM"placing gosub subrouitines at the beginning of code"
+40 REM"will help for faster execution"
+41 JS=SCNCLRVERIFY(1):TX=0:TY=0:SR=0:SL=0:BB=0:BA=0
+42 IF JS AND 2 THEN TX=-1
+43 IF JS AND 1 THEN TX=1
+44 IF JS AND 8 THEN TY=-1
+45 IF JS AND 4 THEN TY=1
+46 IF JS AND 16 THEN SR=1
+47 IF JS AND 32 THEN SL=1
+48 IF JS AND 64 THEN BB=1
+49 IF JS AND 128 THEN BA=1
+50 RETURN
+51 REM "clears game screen"
+52 PRINT"{UP*37}";
+53 print"{left*31}{down}";:FORt=0TO27
+54 PRINT"{right}                             ":NEXTT:RETURN
+
+55 REM " sets up arrays"
+56 DIMCG(4):CG(0)=24:CG(1)=91:CG(2)=86:CG(3)=43:DIMCB(5):CB(0)=32:CB(1)=46
+57 CB(2)=81:CB(3)=90:CB(4)=65::DIMRC(9):RC(0)=$9C:RC(1)=$AA:RC(2)=$B9
+58 RC(4)=$D5:RC(5)=$DC:RC(6)=$E3:RC(7)=$F6:RC(8)=$FE:DIMMR(9):MR(0)=32
+59 MR(1)=100:MR(2)=111:MR(3)=121:MR(4)=98:MR(5)=248:MR(6)=247:MR(7)=227
+60 MR(8)=160:RC(3)=$0E
+61 S1=0:S2=8192:DEF FN RN(RD)=INT(RND(0)*RD)+0
+62 REM "sets screen size"
+63 SCREEN0:COLOR0,0:PRINTCHR$(147):VPOKE$F,$3000,33
+64 REM "f,1=h scale: f,2=v scale"
+65 REM "sets screen to 34*30 characters"
+66 VPOKE $F, 1, 62 : VPOKE $F, 2, 68
+67 REM "sets border color to green"
+68 VPOKE $F, 3, 181
+69 REM"sets border size"
+70 VPOKE $F, 4, 15
+71 VPOKE $F, 5, 114
+72 VPOKE $F, 6, 13
+73 VPOKE $F, 7, 208
+74 VPOKE $F, 8, 40
+75 REM"sets layer 0 registors"
+76 REM "sets layer 0 to 16 color text mode and enables"
+77 VPOKE $F, $2000,33
+78 REM"sets tile w/h to 8*8 pix and map w/h to 64*32 charachters (tiles)"
+79 VPOKE $F, $2001, 1
+80 REM "sets low and high bytes of map base"
+81 VPOKE $F, $2002, 0
+82 VPOKE $F, $2003, 8
+83 REM " sets low and high bytes of tile base"
+84 VPOKE $F, $2004, 0
+85 VPOKE $F, $2005, 62
+86 REM "sets up enemy sprites"
+87 VPOKE$F,$5008,%00000000:VPOKE$F,$5010,%00000010
+88 VPOKE$F,$5009,%10001000:VPOKE$F,$5011,%10001000
+89 VPOKE$F,$500A,0:VPOKE$F,$5012,0
+90 VPOKE$F,$500B,0:VPOKE$F,$5013,0
+91 VPOKE$F,$500C,0:VPOKE$F,$5014,0
+92 VPOKE$F,$500D,0:VPOKE$F,$5015,0
+93 VPOKE$F,$500E,12:VPOKE$F,$5016,12
+94 VPOKE$F,$500F,0:VPOKE$F,$5017,8
+
+
+95 VPOKE$F,$5018,%00000000:VPOKE$F,$5020,%00000010
+96 VPOKE$F,$5019,%10001000:VPOKE$F,$5021,%10001000
+97 VPOKE$F,$501A,0:VPOKE$F,$5022,0
+98 VPOKE$F,$501B,0:VPOKE$F,$5023,0
+99 VPOKE$F,$501C,0:VPOKE$F,$5024,0
+100 VPOKE$F,$501D,0:VPOKE$F,$5025,0
+101 VPOKE$F,$501E,12:VPOKE$F,$5026,12
+102 VPOKE$F,$501F,6:VPOKE$F,$5027,9
+
+
+
+103 FORTT=0TO1
+104 IFTT=0THENV1=$FAB8
+105 IFTT=1THENV1=$F878
+106 FORT=0TO7:VP=VPEEK(0,V1+T)
+107 IFVPAND1THENVPOKE$1,$0000+(T*8)+(TT*64),5
+108 IFVPAND2THENVPOKE$1,$0001+(T*8)+(TT*64),5
+109 IFVPAND4THENVPOKE$1,$0002+(T*8)+(TT*64),5
+110 IFVPAND8THENVPOKE$1,$0003+(T*8)+(TT*64),5
+111 IFVPAND16THENVPOKE$1,$0004+(T*8)+(TT*64),5
+112 IFVPAND32THENVPOKE$1,$0005+(T*8)+(TT*64),5
+113 IFVPAND64THENVPOKE$1,$0006+(T*8)+(TT*64),5
+114 IFVPAND128THENVPOKE$1,$0007+(T*8)+(TT*64),5
+115 NEXTT:NEXTTT
+
+116 VLOAD"b.bin",8,0,0
+
+
+117 REM"gets controller input"
+118 FORT=0TO500:NEXTT:GOSUB41
+119 IFSR=0THEN118
+120 GOSUB 51
+121 PRINT"{home}{right}{down*5}{light blue}{reverse on}{space*9}drone x-16{space*10}"
+122 PRINT"{down*4}{right}{yellow}{reverse off}{space*11}easy"
+123 PRINT"{down*2}{right}{space*11}normal"
+124 PRINT"{down*2}{right}{space*11}hard"
+125 PRINT"{down*2}{right}{space*11}arcade"
+126 PRINT"{down*2}{right}{green}{space*11}story"
+127 PRINT"{down*2}{right}{space*11}directions{home}"
+128 LV=1:FL=0:F9=206:SH=23:SL=0:SM=0:DT=0:D9=206:DM=0:PT=0:K1=0
+129 JX=10:JY=10
+130 VPOKE$0,((JX+(JY*128))*2)+S1,86:VPOKE$0,((JX+(JY*128))*2)+S1+1,8
+131 FORT=0TO625:NEXTT:GOSUB41
+132 VPOKE$0,((JX+(JY*128))*2)+S1+1,0:VPOKE$0,((JX+(JY*128))*2)+S1,32
+133 JY=JY+(TY*3)
+134 IFJY<10THENJY=10
+135 IFJY>25THENJY=25
+136 IFSR=1THENON((JY-10)/3)+1GOTO138,139,140,141,331,407
+137 GOTO130
+138 DC=.28:IC=2:DL=10:SD=0:AM=0:SS=1:GOTO142
+139 DC=.21:IC=3:DL=20:SD=75:AM=0:SS=2:GOTO142
+140 DC=.15:C=4:DL=30:SD=150:AM=0:SS=4:GOTO142
+141 DC=.20:IC=3:DL=15:SD=150:AM=1:SS=0:GOTO142
+142 FL=0:DM=0:SH=23:K1=0
+143 CN=0:GOSUB51:GOSUB3:GOSUB13:GOSUB26
+144 REM "places character on screens"
+145 CX= FN RN(29)+1:CY= FN RN(28)+1
+146 VPOKE 0,(CX+(CY*128))*2,CG(0):VPOKE 0,((CX+(CY*128))*2)+1,$40
+147 REM "generates starting carbon field"
+148 FORT=0TODL+(LV*IC)
+149 TX= FN RN(29)+1:TY= FN RN(28)+1:IF CX=TX AND CY=TY THEN 149
+150 VPOKE0,(TX+(TY*128))*2,CB(3):VPOKE 0,((TX+(TY*128))*2)+1,RC(FN RN(9))
+151 NEXTT
+152 REM"places enemy"
+153 E1=FNRN(29):E2=FNRN(28):VPOKE$F,$500A,E1*8:VPOKE$F,$500C,E2*8
+154 VPOKE$F,$500E,0:IFSS>3THENVPOKE$F,$500E,12
+155 E7=FNRN(29):E8=FNRN(28):VPOKE$F,$5012,E7*8:VPOKE$F,$5014,E8*8
+156 VPOKE$F,$5016,0:IFSS>1THENVPOKE$F,$5016,12
+157 G1=FNRN(29):G2=FNRN(28):VPOKE$F,$501A,G1*8:VPOKE$F,$501C,22*8
+158 VPOKE$F,$501E,0:IFSS>0THENVPOKE$F,$501E,12
+159 G5=FNRN(29):G6=FNRN(28):VPOKE$F,$5022,G5*8:VPOKE$F,$5024,G6*8
+160 VPOKE$F,$5026,0:IFSS>2THENVPOKE$F,$5026,12
+161 REM"srarts timer/turns on sprites"
+162 TS=TI:VPOKE$F,$4000,1
+
+
+163 REM "retrieve controller input"
+164 FORT=0TO150-SD:NEXTT:GOSUB 41
+165 IFFL>190ANDDM>190THENVPOKE$F,$4000,0:GOSUB52:GOTO310
+
+166 REM "enemy controls"
+167 IFFNRN(2)=1THEN183
+168 IFVPEEK($F,$500E)=0THEN173
+169 IFE1=CXANDE2=CYTHEN171
+170 GOTO174
+171 SH=SH-1:GOSUB3:IFSH<1THEN262
+172 GOTO202
+173 IFFNRN(200)=0THENVPOKE$F,$500E,12
+174 IFFNRN(7)>0THEN176
+175 E3=FNRN(3)-1:E4=FNRN(3)-1
+176 E1=E1+E3:IFE1>29THENE1=1
+177 IFE1<1THENE1=29
+178 E2=E2+E4:IFE2>28THENE2=1
+179 IFE2<1THENE2=28
+180 VPOKE$F,$500A,E1*8:VPOKE$F,$500C,E2*8
+181 IFVPEEK($F,$5008)=0THENVPOKE$F,$5008,2:GOTO201
+182 IFVPEEK($F,$5008)=2THENVPOKE$F,$5008,0:GOTO201
+
+183 IFVPEEK($F,$5016)=0THEN189
+184 IFE7=CXANDE8=CYTHEN186
+185 GOTO188
+186 SH=SH-1:GOSUB3:IFSH<1THEN262
+187 GOTO201
+188 IFFNRN(5)>0THEN194
+189 IFFNRN(200)=0THENVPOKE$F,$5016,12
+190 E5=0:IFE7>CXTHENE5=E5-1:GOTO192
+191 IFE7<CXTHENE5=1
+192 E6=0:IFE8>CYTHENE6=E6-1:GOTO194
+193 IFE8<CYTHEN:E6=E6+1
+194 E7=E7+E5:IFE7>29THENE7=1
+195 IFE7<1THENE7=29
+196 E8=E8+E6:IFE8>28THENE8=1
+197 IFE8<1THENE8=28
+198 VPOKE$F,$5012,E7*8:VPOKE$F,$5014,E8*8
+199 IFVPEEK($F,$5010)=0THENVPOKE$F,$5010,2:GOTO201
+200 IFVPEEK($F,$5010)=2THENVPOKE$F,$5010,0
+
+201 IFFNRN(2)=1THEN218
+202 IFVPEEK($F,$501E)=0THEN208
+203 IFG1=CXANDG2=CYTHEN205
+204 GOTO207
+205 SH=SH-1:GOSUB3:IFSH<1THEN262
+206 GOTO235
+207 IFFNRN(8)>0THEN211
+208 IFFNRN(200)=0THENVPOKE$F,$501E,12
+209 G3=TX:G4=TY
+210 IFG3=0ANDG4=0THENG3=FNRN(3)-1:G4=FNRN(3)-1
+211 G1=G1+G3:IFG1>29THENG1=1
+212 IFG1<1THENG1=29
+213 G2=G2+G4:IFG2>28THENG2=1
+214 IFG2<1THENG2=28
+215 VPOKE$F,$501A,G1*8:VPOKE$F,$501C,G2*8
+216 IFVPEEK($F,$5018)=0THENVPOKE$F,$5018,2:GOTO235
+217 IFVPEEK($F,$5018)=2THENVPOKE$F,$5018,0:GOTO235
+
+
+218 IFVPEEK($F,$5026)=0THEN224
+219 IFG5=CXANDG6=CYTHEN221
+220 GOTO223
+221 SH=SH-1:GOSUB3:IFSH<1THEN262
+222 GOTO235
+223 IFFNRN(6)>0THEN227
+224 IFFNRN(200)=0THENVPOKE$F,$5026,12
+225 G7=TX*-1:G8=TY*-1
+226 IFG7=0ANDG8=0THENG8=FNRN(3)-1:G7=FNRN(3)-1
+227 G5=G5+G7:IFG5>29THENG5=1
+228 IFG5<1THENG5=29
+229 G6=G6+G8:IFG6>28THENG6=1
+230 IFG6<1THENG6=28
+231 VPOKE$F,$5022,G5*8:VPOKE$F,$5024,G6*8
+232 IFVPEEK($F,$5020)=0THENVPOKE$F,$5020,2:GOTO235
+233 IFVPEEK($F,$5020)=2THENVPOKE$F,$5020,0
+
+
+
+
+
+
+
+234 REM "collision detection"
+235IFBB=1ANDFL>9THENIFSH<23THENFL=FL-8:SH=SH+1:GOSUB26:GOSUB3:GOTO164
+236 IFSR=1THEN305
+237 IFTX=0ANDTY=0THEN274
+238 IFBA=1ANDFL>17THENBX=CX:BY=CY:BV=TX:BW=TY:GOTO287
+239 IF CX+TX>29 THEN TX=-28
+240 IF CX+TX<1 THEN TX=28
+241 IF CY+TY>28 THEN TY=-27
+242 IF CY+TY<1 THEN TY=27
+243 Z=5:FORT=0TO4
+244 IFVPEEK (0, (CX+TX+((CY+TY)*128))*2)=CB(T)THEN Z=T+1
+245 NEXTT
+246 ON Z GOTO 249,256,258,260,247,274
+247 K1=K1+100:GOTO249
+248 REM "character movement"
+249 IF CN=0 THEN CN=2 : GOTO 251
+250 IF CN=2 THEN CN=0
+251 VPOKE 0, (CX+TX+((CY+TY)*128))*2, CG(CN)
+252 VPOKE 0, ((CX+TX+((CY+TY)*128))*2)+1, $41
+253 VPOKE 0, (CX+(CY*128))*2, CB(0):VPOKE$ 0, ((CX+(CY*128))*2)+1, 0
+254 CX=CX+TX: CY=CY+TY:DM=DM+(DC*2.5):GOSUB13:GOTO 274
+255 REM "coal dust collision"
+256 FL=FL+(12*DC):GOSUB26:GOTO249
+257 REM "coal collision
+258 FL=FL+(24*DC):GOSUB26:GOTO249
+259 REM "diamond collision"
+260 SH=SH-6:GOSUB3:IFSH<1THEN262
+261 GOTO164
+
+
+
+262 VPOKE$F,$4000,0:GOSUB51:SC=SC+K1:K1=0:IFSC<6000THEN269
+263 PRINT "{home}{down*3}{right*2}{green}start/enter to continue"
+264 PRINT "{down*3}{right*2}select/space to quit{home}"
+265 GOSUB41:FOR T=0TO250:NEXTT
+266 IF SR=1THENSC=SC-4000:GOTO142
+267 IFSL=1THEN269
+268 GOTO265
+269 GOSUB51:PRINT"{home}{down*4}{green}{right*2}{space*3}game over"
+270 PRINT"{down*10}{right*2}{space*3}{yellow} press start or enter"
+271 GOSUB 41: IF NOT SR=1THEN271
+272 GOTO 120
+273 REM "carbon condensor"
+274 IF FN RN(6)-((DL/10)*2)>0THEN164
+275 DX= FN RN(29)+1:TC=0: DY= FN RN(28)+1:IFDX=CX AND DY=CY THEN 285
+276 IF FN RN(50)=0THEN280
+277 FORT= 0 TO 3
+278 IF VPEEK(0,(DX+(DY*128))*2)=CB(T) THEN TC=T
+279 NEXTT
+280 IFTC=0ANDFNRN(SD+DL)=0THENTC=4:GOTO282
+
+281 IF TC<3 THEN TC=TC+1
+282 VPOKE$ 0, (DX+(DY*128))*2,CB(TC)
+283 IF TC=1 THEN VPOKE$ 0, ((DX+(DY*128))*2)+1,RC(FNRN(9))
+284 IF TC=4 THEN VPOKE$ 0, ((DX+(DY*128))*2)+1,$8F
+285 GOTO164
+286REM "blast canon"
+287 BU=0:FL=FL-8:GOSUB26
+288 IFBX=CXANDBY=CYTHEN295
+289 IFBX*8=VPEEK($F,$500A)ANDBY*8=VPEEK($F,$500C)THENVPOKE$F,$500E,0
+290 IFBX*8=VPEEK($F,$5012)ANDBY*8=VPEEK($F,$5014)THENVPOKE$F,$5016,0
+291 IFBX*8=VPEEK($F,$501A)ANDBY*8=VPEEK($F,$501C)THENVPOKE$F,$501E,0
+292 IFBX*8=VPEEK($F,$5022)ANDBY*8=VPEEK($F,$5024)THENVPOKE$F,$5026,0
+293 FORT=0TO2:VPOKE0,((BX+(BY*128))*2)+S1,42+FNRN(2)*39
+294 VPOKE0,((BX+(BY*128))*2)+S1+1,$F0+FNRN(2):NEXTT
+295 BV=BX:BW=BY:BX=BX+TX:BY=BY+TY
+296 IFBX>29THENBX=2:GOTO298
+297 IFBX<2THENBX=29
+298 IFBY>28THENBY=2:GOTO300
+299 IFBY<2THENBY=28
+300 IFBV=CXANDBW=CYTHEN302
+301 VPOKE0,((BV+(BW*128))*2)+S1+1,0:VPOKE0,((BV+(BW*128))*2)+S1,32
+302 BU=BU+1:IFBU<6THEN288
+303 BU=0:VPOKE0,((BV+(BW*128))*2)+S1,32:VPOKE0,((BV+(BW*128))*2)+S1+1,0
+304 BA=0:GOTO274
+
+
+
+
+
+305REM "pause"
+306 AT$=TI$:VPOKE$F,3,1:FORT=0TO250:NEXTT:GOSUB41
+307 IFSR=0THEN306
+308 VPOKE$F,3,181:FORT=0TO500:NEXTT:TI$=AT$:GOTO164
+
+309 REM"level complete
+310 TB=(TI-TS+36000)/100
+311 PRINT"{home}{down*4}{right*4}{green}moon "lv" complete"
+312 PRINT"{down}{right}base pay=     $ 1000"
+313 PRINT"{down}{right}sample bonus= $"K1
+314 PRINT"{down}{right}time bonus=   $"TB
+315 PRINT"{down}{right}              ----------"
+316 PRINT"{down}{right}job total=    $"1000+K1+TB
+317 SC=SC+K1+1000+TB:K1=0:TB=0
+318 PRINT"{down}{right}mission total=$"SC
+319 IFAM=1THENSD=SD-5:SS=SS+.5:IFSS>5THENSS=5
+320 IFSD<0THENSD=0
+321 GOTO323
+322 IF LV=10 THEN 326
+323 PRINT"{down*4}{right*4}press start{home}":LV=LV+1
+324 GOSUB41:FORT=0TO250:NEXTT:IFSR=1THEN142
+325 GOTO324
+326 PRINT"{down*2}{right}congradulations!"
+327 PRINT"{down}{right}mission complete!"
+328 PRINT"{down*2}{right*4}press start/enter"
+329 FORT=0TO250:NEXTT:GOSUB41:IFSR=1THEN120
+
+330 GOTO349
+331 GOSUB52
+332 PRINT"{home}{down}{right}{green}welcome to planet vc-20."
+333 PRINT "{right}"
+334 PRINT "{right}we are surveying the 10 moons"
+335 PRINT "{right}that orbit the planet."
+336 PRINT "{right}"
+337 PRINT "{right}you will be remote operating"
+338 PRINT "{right}the drone x-16 survey drone."
+339 PRINT "{right}guide it across the  surface"
+340 PRINT "{right}of each moon to collect data."
+341 PRINT "{right}"
+342 PRINT "{right}the drone is powered by"
+343 PRINT "{right}veramite, a mineral found"
+344 PRINT "{right}in the rings of vc-20 that"
+345 PRINT "{right}falls to the moons and"
+346 PRINT "{right}condensus on their"
+347 PRINT "{right}surfaces. you can collect its"
+348 PRINT "{right}dust and ore form but once"
+349 PRINT "{right}it crystalizes it becomes to"
+350 PRINT "{right}dense for the drones fuel"
+351 PRINT "{right}precessors to handle and will"
+352 PRINT "{right}damage the drone."
+353 PRINT "{right}"
+354 PRINT "{right}"
+355 PRINT "{right}      {yellow}press start/enter{home}"
+356 FOR T=0TO500:NEXTT:GOSUB41:IFSR=0THEN356
+
+357 GOSUB52
+358 PRINT "{home}{down}{right}{green}stay away from the jeli."
+359 PRINT "{right}plasma based  lifeforms that"
+360 PRINT "{right}will damage your shields."
+361 PRINT "{right}you can take them out with"
+362 PRINT "{right}your blast canon but  it will"
+363 PRINT "{right}cost you fuel."
+364 PRINT "{right}"
+365 PRINT "{right}once you have collected"
+366 PRINT "{right}enough data and fuel it will"
+367 PRINT "{right}go into autopilot and return"
+368 PRINT "{right}to base."
+369 PRINT "{right}"
+370 PRINT "{right}there is also a rare plant"
+371 PRINT "{right}that sprouts on the moons"
+372 PRINT "{right}that our botonist would like"
+373 PRINT "{right}you to collect samples of."
+374 PRINT "{right}"
+375 PRINT "{right}"
+376 PRINT "{right}"
+377 PRINT "{right}     {yellow}press start/enter{home}"
+378 FOR T=0TO500:NEXTT:GOSUB41:IFSR=0THEN378
+
+379 GOSUB52
+380 PRINT "{home}{down}{right}{green}the job pays 1000 space creds"
+381 PRINT "{right}per moon."
+382 PRINT "{right}"
+383 PRINT "{right}100 for each plant specimen"
+384 PRINT "{right}you collect."
+385 PRINT "{right}"
+386 PRINT "{right}plus an added time bonus if"
+387 PRINT "{right}you finish each job ahead"
+388 PRINT "{right}of schedule. there will also"
+389 PRINT "{right}be a time penalty if you"
+390 PRINT "{right}take to long."
+391 PRINT "{right}"
+392 PRINT "{right}the first drone is on us."
+393 PRINT "{right}if you wreck it it will cost"
+394 PRINT "{right}6000 creds for a new one to"
+395 PRINT "{right}continue. if you cannot"
+396 PRINT "{right}afford it you will be out of"
+397 PRINT "{right}a job and out of pay."
+398 PRINT "{right}"
+399 PRINT "{right}be careful and efficient and"
+400 PRINT "{right}you can walk away with a"
+401 PRINT "{right}nice paycheck. good luck."
+402 PRINT "{right}"
+403 PRINT "{right}     {yellow}press start/enter"
+404 FOR T=0TO500:NEXTT:GOSUB41:IFSR=0THEN404
+405 GOTO 120
+
+406 REM"directiona"
+407GOSUB52
+408 PRINT "{home}{down}{right}"
+409 PRINT "{right}{green}up/down/left/right to move"
+410 PRINT "{right}"
+411 PRINT "{right}a/ctrl to fire blast canon"
+412 PRINT "{right}"
+413 PRINT "{right}b/alt tranfers power from"
+414 PRINT "{right}      fuel to the shields"
+415 PRINT "{right}"
+416 PRINT "{right}start/enter to pause game"
+417 PRINT "{right}"
+418 PRINT "{right}{yellow}V{green}- drone x-16"
+419 PRINT "{right}"
+420 PRINT "{right}{purple}.{green}- veramite dust"
+421 PRINT "{right}"
+422 PRINT "{right}{cyan}Q{green}- veramite ore"
+423 PRINT "{right}"
+424 PRINT "{right}{light blue}Z{green}- veramite crystal"
+425 PRINT "{right}"
+426 PRINT "{right}{light green}A{green}- plant specimen"
+427 PRINT "{right}"
+428 PRINT "{right}W- jeli"
+429 PRINT "{right}"
+430 PRINT "{right}"
+431 PRINT "{right}       {yellow}press start/enter"
+432 FOR T=0TO250:NEXTT:GOSUB41:IFSR=0THEN432
+433 GOTO 120
